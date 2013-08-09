@@ -15,25 +15,25 @@
     <script src="https://js.leapmotion.com/0.2.0/leap.min.js"></script>
     <script>
 var map;
-var lastHand;
+var leftHandPrev;
 
 var separationStart;
 
 function move(frame) {
     // if there is one hand grabbing...
-    if(frame.pointables.length == 0 && frame.hands.length == 1) {
-      var hand = frame.hands[0];
+    if(frame.hands.length > 0 && frame.hands[0].pointables.length == 0) {
+      var leftHand = frame.hands[0];
+      var rightHand = frame.hands.length > 1 ? frame.hands[1] : undefined;
       
       // If there was no previous closed position, capture it and exit
-      if(lastHand == null) {
-        lastHand = hand.palmPosition;
-        // console.log("Setting lastHand: " + lastHand);
+      if(leftHandPrev == null) {
+        leftHandPrev = leftHand;
         return;
       }
 
       // Calculate how much the hand moved
-      var dX = lastHand[0] - hand.palmPosition[0];
-      var dY = lastHand[1] - hand.palmPosition[1];
+      var dX = leftHandPrev.palmPosition[0] - leftHand.palmPosition[0];
+      var dY = leftHandPrev.palmPosition[1] - leftHand.palmPosition[1];
       // console.log("Movement: " + dX + ","+dY);
 
       var center = map.getCenter();
@@ -49,7 +49,7 @@ function move(frame) {
 
       map.setCenter(newCenter);
 
-      lastHand = hand.palmPosition;
+      leftHandPrev = leftHand;
 
     } else
           // if there is two hands grabbing...
@@ -82,8 +82,8 @@ function move(frame) {
 
     } else {
       // If the left hand is not in a grab position, clear the last hand position
-      if(frame.hands.length > 0 && frame.hands[0].pointables.length > 0 && lastHand != null) {
-        lastHand = null;
+      if(frame.hands.length > 0 && frame.hands[0].pointables.length > 0 && leftHandPrev != null) {
+        leftHandPrev = null;
       }
 
       // if the right hand is not in a grab position, clear the separation
