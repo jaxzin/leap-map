@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body, #map-canvas {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+    <script src="https://js.leapmotion.com/0.2.0/leap.min.js"></script>
+    <script>
+var map;
+var lastHand;
+
+function move(frame) {
+    // if there is a grab...
+    if(frame.pointables.length == 0 && frame.hands.length == 1) {
+      var hand = frame.hands[0];
+      
+      // If there was no previous closed position, capture it and exit
+      if(lastHand == null) {
+        lastHand = hand.palmPosition;
+        // console.log("Setting lastHand: " + lastHand);
+        return;
+      }
+
+      // Calculate how much the hand moved
+      var dX = lastHand[0] - hand.palmPosition[0];
+      var dY = lastHand[1] - hand.palmPosition[1];
+      // console.log("Movement: " + dX + ","+dY);
+
+      var center = map.getCenter();
+
+      // TODO: This scaling needs to depend on the current zoom level of the map
+      var scaling = 0.1;
+      var newLat = center.lat() + dY * scaling;
+      var newLng = center.lng() + dX * scaling;
+
+      var newCenter = new google.maps.LatLng(newLat, newLng);
+
+      // console.log(newCenter)
+
+      map.setCenter(newCenter);
+
+      lastHand = hand.palmPosition;
+
+    } else if (lastHand != null) {
+      // If there are no closed hands, clear the last hand position
+      lastHand = null;
+       // console.log("Clearing lastHand");
+    }
+};
+
+function initialize() {
+  var mapOptions = {
+    zoom: 8,
+    center: new google.maps.LatLng(-34.397, 150.644),
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+
+  // listen to Leap Motion
+  Leap.loop(move);
+}
+
+
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
