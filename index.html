@@ -24,11 +24,44 @@ function move(frame) {
     if(frame.hands.length > 0 && frame.hands[0].pointables.length == 0) {
       var leftHand = frame.hands[0];
       var rightHand = frame.hands.length > 1 ? frame.hands[1] : undefined;
+      var separation;
       
       // If there was no previous closed position, capture it and exit
       if(leftHandPrev == null) {
         leftHandPrev = leftHand;
         return;
+      }
+
+      // if there is a right hand and its gripped...
+      if(rightHand) {
+        if(rightHand.pointables.length == 0) {
+          separation = Math.sqrt(
+                            Math.pow(rightHand.palmPosition[0] - leftHand.palmPosition[0], 2) + 
+                            Math.pow(rightHand.palmPosition[1] - leftHand.palmPosition[1], 2)
+                          );
+          // console.log("separation = " + separation + " ("+separationStart+")");
+
+          // ...and no previous separation, capture and exit
+          if(separationStart == null) {
+            separationStart = separation;
+            return;
+          }
+
+          // Calculate if we need to change the zoom level
+          var currentZoom = map.getZoom();
+
+          if(currentZoom > 1 && separation < separationStart / 2) {
+            map.setZoom( currentZoom - 1 );
+            separationStart = separation;
+          } else if( currentZoom < 15 && separation > 2 * separationStart ) {
+            map.setZoom( currentZoom + 1 );
+            separationStart = separation;
+          }
+        // If the right hand is not gripped...
+        } else if(separationStart != null) {
+          separationStart = null;
+        }
+
       }
 
       // Calculate how much the hand moved
@@ -49,36 +82,8 @@ function move(frame) {
 
       map.setCenter(newCenter);
 
+
       leftHandPrev = leftHand;
-
-    } else
-          // if there is two hands grabbing...
-          if(frame.pointables.length == 0 && frame.hands.length == 2) {
-      var leftHand = frame.hands[0].palmPosition;
-      var rightHand = frame.hands[1].palmPosition;
-
-      var separation = Math.sqrt(
-                          Math.pow(rightHand[0] - leftHand[0], 2) + 
-                          Math.pow(rightHand[1] - leftHand[1], 2)
-                        );
-      console.log("separation = " + separation + " ("+separationStart+")");
-
-        if(separationStart == null) {
-          separationStart = separation;
-
-          return;
-        }
-
-        var currentZoom = map.getZoom();
-
-        if(currentZoom > 1 && separation < separationStart / 2) {
-          map.setZoom( currentZoom - 1 );
-          separationStart = separation;
-        } else if( currentZoom < 15 && separation > 2 * separationStart ) {
-          map.setZoom( currentZoom + 1 );
-          separationStart = separation;
-        }
-
 
     } else {
       // If the left hand is not in a grab position, clear the last hand position
