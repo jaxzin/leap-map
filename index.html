@@ -19,6 +19,8 @@ var leftHandPrev;
 
 var separationStart;
 
+var MAX_ZOOM = 22;
+
 function move(frame) {
     // if there is one hand grabbing...
     if(frame.hands.length > 0 && frame.hands[0].pointables.length == 0) {
@@ -53,7 +55,7 @@ function move(frame) {
           if(currentZoom > 1 && separation < (separationStart / 1.25) ) {
             map.setZoom( currentZoom - 1 );
             separationStart = separation;
-          } else if( currentZoom < 15 && separation > (1.25 * separationStart) ) {
+          } else if( currentZoom < MAX_ZOOM && separation > (1.25 * separationStart) ) {
             map.setZoom( currentZoom + 1 );
             separationStart = separation;
           }
