@@ -50,10 +50,10 @@ function move(frame) {
           // Calculate if we need to change the zoom level
           var currentZoom = map.getZoom();
 
-          if(currentZoom > 1 && separation < separationStart / 2) {
+          if(currentZoom > 1 && separation < (separationStart / 1.25) ) {
             map.setZoom( currentZoom - 1 );
             separationStart = separation;
-          } else if( currentZoom < 15 && separation > 2 * separationStart ) {
+          } else if( currentZoom < 15 && separation > (1.25 * separationStart) ) {
             map.setZoom( currentZoom + 1 );
             separationStart = separation;
           }
