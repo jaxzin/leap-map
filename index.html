@@ -36,8 +36,8 @@ function move(frame) {
 
       var center = map.getCenter();
 
-      // TODO: This scaling needs to depend on the current zoom level of the map
-      var scaling = 0.1;
+      var scaling = 4.0 / Math.pow(2, map.getZoom()-1);
+
       var newLat = center.lat() + dY * scaling;
       var newLng = center.lng() + dX * scaling;
 
