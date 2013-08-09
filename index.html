@@ -17,8 +17,10 @@
 var map;
 var lastHand;
 
+var separationStart;
+
 function move(frame) {
-    // if there is a grab...
+    // if there is one hand grabbing...
     if(frame.pointables.length == 0 && frame.hands.length == 1) {
       var hand = frame.hands[0];
       
@@ -49,9 +51,45 @@ function move(frame) {
 
       lastHand = hand.palmPosition;
 
-    } else if (lastHand != null) {
-      // If there are no closed hands, clear the last hand position
-      lastHand = null;
+    } else
+          // if there is two hands grabbing...
+          if(frame.pointables.length == 0 && frame.hands.length == 2) {
+      var leftHand = frame.hands[0].palmPosition;
+      var rightHand = frame.hands[1].palmPosition;
+
+      var separation = Math.sqrt(
+                          Math.pow(rightHand[0] - leftHand[0], 2) + 
+                          Math.pow(rightHand[1] - leftHand[1], 2)
+                        );
+      console.log("separation = " + separation + " ("+separationStart+")");
+
+        if(separationStart == null) {
+          separationStart = separation;
+
+          return;
+        }
+
+        var currentZoom = map.getZoom();
+
+        if(currentZoom > 1 && separation < separationStart / 2) {
+          map.setZoom( currentZoom - 1 );
+          separationStart = separation;
+        } else if( currentZoom < 15 && separation > 2 * separationStart ) {
+          map.setZoom( currentZoom + 1 );
+          separationStart = separation;
+        }
+
+
+    } else {
+      // If the left hand is not in a grab position, clear the last hand position
+      if(frame.hands.length > 0 && frame.hands[0].pointables.length > 0 && lastHand != null) {
+        lastHand = null;
+      }
+
+      // if the right hand is not in a grab position, clear the separation
+      if(frame.hands.length > 1 && frame.hands[0].pointables.length > 0 && separationStart != null) {
+        separationStart = null;
+      }
        // console.log("Clearing lastHand");
     }
 };
