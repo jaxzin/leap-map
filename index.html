@@ -96,7 +96,7 @@ function move(frame) {
       }
 
       // if the right hand is not in a grab position, clear the separation
-      if(frame.hands.length > 1 && frame.hands[0].pointables.length > 0 && separationStart != null) {
+      if(frame.hands.length > 1 && frame.hands[1].pointables.length > 0 && separationStart != null) {
         separationStart = null;
       }
        // console.log("Clearing lastHand");
