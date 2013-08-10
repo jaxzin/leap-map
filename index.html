@@ -104,34 +104,49 @@ function move(frame) {
 };
 
 
-var leftHandMarker;
+var handMarkers = [];
+
+var HEIGHT_OFFSET = 150;
 
 function markHands(frame) {
 
 
-      var scaling = (4.0 / Math.pow(2, map.getZoom()-1)) * 0.2;
+      var scaling = (4.0 / Math.pow(2, map.getZoom()-1));
 
-      var center = map.getCenter();
       var bounds = map.getBounds();
+      // FIXME: Sometimes this gets run too early, just exit if its too early.
+      if(!bounds) { return; }
       var origin = new google.maps.LatLng(bounds.getSouthWest().lat(), bounds.getCenter().lng());
 
-      var handsMap = frame.handsMap
-      for(var i in handsMap) {
+      var hands = frame.hands
+      for(var i in hands) {
 
-        var hand = handsMap[i];
+        // Limit this to 2 hands for now
+        if(i > 2) {
+          return;
+        }
 
-        newCenter = new google.maps.LatLng(origin.lat() + (hand.palmPosition[1] * scaling), origin.lng() + (hand.palmPosition[0] * scaling));
+        var hand = hands[i];
+
+        newCenter = new google.maps.LatLng(origin.lat() + ((hand.palmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.palmPosition[0] * scaling));
 
         // console.log(center.lat() + "," + center.lng());
         // console.log(newCenter.lat() + "," + newCenter.lng());
 
 
         var gripped = hand.pointables.length == 0;
-        var baseRadius = gripped ? 1500000 : 2000000;
+        var baseRadius = gripped ? 350000 : 500000;
 
         var handColor = gripped ? '#007700' : '#777777';
 
-        leftHandMarker.setOptions({
+        var handMarker = handMarkers[i];
+        if(!handMarker) {
+          handMarker = new google.maps.Circle();
+          handMarkers[i] = handMarker;
+        }
+
+
+        handMarker.setOptions({
           strokeColor: handColor,
           strokeOpacity: 0.8,
           strokeWeight: 2,
@@ -145,6 +160,7 @@ function markHands(frame) {
       }
 
 
+
 }
 
 function initialize() {
@@ -155,17 +171,6 @@ function initialize() {
   };
   map = new google.maps.Map(document.getElementById('map-canvas'),
       mapOptions);
-
-  leftHandMarker = new google.maps.Circle({
-        strokeColor: '#777777',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#777777',
-        fillOpacity: 0.35,
-        map: map,
-        center: mapOptions.center,
-        radius: 10000
-      });
 
   // listen to Leap Motion
   Leap.loop(move);
