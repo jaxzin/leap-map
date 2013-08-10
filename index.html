@@ -167,7 +167,10 @@ function initialize() {
   var mapOptions = {
     zoom: 8,
     center: new google.maps.LatLng(-34.397, 150.644),
-    mapTypeId: google.maps.MapTypeId.ROADMAP
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    mapTypeControlOptions: {
+        position: google.maps.ControlPosition.TOP_LEFT
+    }
   };
   map = new google.maps.Map(document.getElementById('map-canvas'),
       mapOptions);
@@ -183,6 +186,13 @@ google.maps.event.addDomListener(window, 'load', initialize);
     </script>
   </head>
   <body>
+
+    <a href="https://github.com/jaxzin/leap-map"><img
+        id="fork-ribbon"
+        style="position: absolute; top: 0; right: 0; border: 0; z-index: 1000;"
+        src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
+        alt="Fork me on GitHub"/></a>
+
     <div id="map-canvas"></div>
   </body>
 </html>
