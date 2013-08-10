@@ -20,15 +20,18 @@ var leftHandPrev;
 var separationStart;
 
 var MAX_ZOOM = 22;
+var SEPARATION_SCALING = 1.25;
+var LEFT_HAND = 0, RIGHT_HAND = 1;
+var X = 0, Y = 1, Z = 2;
 
 function move(frame) {
 
     markHands(frame);
 
     // if there is one hand grabbing...
-    if(frame.hands.length > 0 && frame.hands[0].pointables.length == 0) {
-      var leftHand = frame.hands[0];
-      var rightHand = frame.hands.length > 1 ? frame.hands[1] : undefined;
+    if(frame.hands.length > 0 && frame.hands[LEFT_HAND].pointables.length == 0) {
+      var leftHand = frame.hands[LEFT_HAND];
+      var rightHand = frame.hands.length > 1 ? frame.hands[RIGHT_HAND] : undefined;
       var separation;
       
       // If there was no previous closed position, capture it and exit
@@ -41,8 +44,8 @@ function move(frame) {
       if(rightHand) {
         if(rightHand.pointables.length == 0) {
           separation = Math.sqrt(
-                            Math.pow(rightHand.palmPosition[0] - leftHand.palmPosition[0], 2) + 
-                            Math.pow(rightHand.palmPosition[1] - leftHand.palmPosition[1], 2)
+                            Math.pow(rightHand.palmPosition[X] - leftHand.palmPosition[X], 2) + 
+                            Math.pow(rightHand.palmPosition[Y] - leftHand.palmPosition[Y], 2)
                           );
           // console.log("separation = " + separation + " ("+separationStart+")");
 
@@ -55,10 +58,10 @@ function move(frame) {
           // Calculate if we need to change the zoom level
           var currentZoom = map.getZoom();
 
-          if(currentZoom > 1 && separation < (separationStart / 1.25) ) {
+          if(currentZoom > 1 && separation < (separationStart / SEPARATION_SCALING) ) {
             map.setZoom( currentZoom - 1 );
             separationStart = separation;
-          } else if( currentZoom < MAX_ZOOM && separation > (1.25 * separationStart) ) {
+          } else if( currentZoom < MAX_ZOOM && separation > (SEPARATION_SCALING * separationStart) ) {
             map.setZoom( currentZoom + 1 );
             separationStart = separation;
           }
@@ -70,8 +73,8 @@ function move(frame) {
       }
 
       // Calculate how much the hand moved
-      var dX = leftHandPrev.palmPosition[0] - leftHand.palmPosition[0];
-      var dY = leftHandPrev.palmPosition[1] - leftHand.palmPosition[1];
+      var dX = leftHandPrev.palmPosition[X] - leftHand.palmPosition[X];
+      var dY = leftHandPrev.palmPosition[Y] - leftHand.palmPosition[Y];
       // console.log("Movement: " + dX + ","+dY);
 
       var center = map.getCenter();
@@ -91,12 +94,12 @@ function move(frame) {
 
     } else {
       // If the left hand is not in a grab position, clear the last hand position
-      if(frame.hands.length > 0 && frame.hands[0].pointables.length > 0 && leftHandPrev != null) {
+      if(frame.hands.length > LEFT_HAND && frame.hands[LEFT_HAND].pointables.length > 0 && leftHandPrev != null) {
         leftHandPrev = null;
       }
 
       // if the right hand is not in a grab position, clear the separation
-      if(frame.hands.length > 1 && frame.hands[1].pointables.length > 0 && separationStart != null) {
+      if(frame.hands.length > RIGHT_HAND && frame.hands[RIGHT_HAND].pointables.length > 0 && separationStart != null) {
         separationStart = null;
       }
        // console.log("Clearing lastHand");
@@ -107,6 +110,7 @@ function move(frame) {
 var handMarkers = [];
 
 var HEIGHT_OFFSET = 150;
+var BASE_MARKER_SIZE_GRIPPED = 350000, BASE_MARKER_SIZE_UNGRIPPED = 500000;
 
 function markHands(frame) {
 
@@ -122,7 +126,7 @@ function markHands(frame) {
       for(var i in hands) {
 
         // Limit this to 2 hands for now
-        if(i > 2) {
+        if(i > RIGHT_HAND) {
           return;
         }
 
@@ -135,7 +139,7 @@ function markHands(frame) {
 
 
         var gripped = hand.pointables.length == 0;
-        var baseRadius = gripped ? 350000 : 500000;
+        var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
 
         var handColor = gripped ? '#007700' : '#777777';
 
