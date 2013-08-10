@@ -22,6 +22,9 @@ var separationStart;
 var MAX_ZOOM = 22;
 
 function move(frame) {
+
+    markHands(frame);
+
     // if there is one hand grabbing...
     if(frame.hands.length > 0 && frame.hands[0].pointables.length == 0) {
       var leftHand = frame.hands[0];
@@ -79,11 +82,10 @@ function move(frame) {
       var newLng = center.lng() + dX * scaling;
 
       var newCenter = new google.maps.LatLng(newLat, newLng);
-
+      
       // console.log(newCenter)
 
       map.setCenter(newCenter);
-
 
       leftHandPrev = leftHand;
 
@@ -101,6 +103,50 @@ function move(frame) {
     }
 };
 
+
+var leftHandMarker;
+
+function markHands(frame) {
+
+
+      var scaling = (4.0 / Math.pow(2, map.getZoom()-1)) * 0.2;
+
+      var center = map.getCenter();
+      var bounds = map.getBounds();
+      var origin = new google.maps.LatLng(bounds.getSouthWest().lat(), bounds.getCenter().lng());
+
+      var handsMap = frame.handsMap
+      for(var i in handsMap) {
+
+        var hand = handsMap[i];
+
+        newCenter = new google.maps.LatLng(origin.lat() + (hand.palmPosition[1] * scaling), origin.lng() + (hand.palmPosition[0] * scaling));
+
+        // console.log(center.lat() + "," + center.lng());
+        // console.log(newCenter.lat() + "," + newCenter.lng());
+
+
+        var gripped = hand.pointables.length == 0;
+        var baseRadius = gripped ? 1500000 : 2000000;
+
+        var handColor = gripped ? '#007700' : '#777777';
+
+        leftHandMarker.setOptions({
+          strokeColor: handColor,
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: handColor,
+          fillOpacity: 0.35,
+          map: map,
+          center: newCenter,
+          radius: baseRadius * scaling
+        });
+
+      }
+
+
+}
+
 function initialize() {
   var mapOptions = {
     zoom: 8,
@@ -109,6 +155,17 @@ function initialize() {
   };
   map = new google.maps.Map(document.getElementById('map-canvas'),
       mapOptions);
+
+  leftHandMarker = new google.maps.Circle({
+        strokeColor: '#777777',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#777777',
+        fillOpacity: 0.35,
+        map: map,
+        center: mapOptions.center,
+        radius: 10000
+      });
 
   // listen to Leap Motion
   Leap.loop(move);
