@@ -44,8 +44,8 @@ function move(frame) {
       if(rightHand) {
         if(rightHand.pointables.length == 0) {
           separation = Math.sqrt(
-                            Math.pow(rightHand.palmPosition[X] - leftHand.palmPosition[X], 2) + 
-                            Math.pow(rightHand.palmPosition[Y] - leftHand.palmPosition[Y], 2)
+                            Math.pow(rightHand.stabilizedPalmPosition[X] - leftHand.stabilizedPalmPosition[X], 2) + 
+                            Math.pow(rightHand.stabilizedPalmPosition[Y] - leftHand.stabilizedPalmPosition[Y], 2)
                           );
           // console.log("separation = " + separation + " ("+separationStart+")");
 
@@ -73,8 +73,8 @@ function move(frame) {
       }
 
       // Calculate how much the hand moved
-      var dX = leftHandPrev.palmPosition[X] - leftHand.palmPosition[X];
-      var dY = leftHandPrev.palmPosition[Y] - leftHand.palmPosition[Y];
+      var dX = leftHandPrev.stabilizedPalmPosition[X] - leftHand.stabilizedPalmPosition[X];
+      var dY = leftHandPrev.stabilizedPalmPosition[Y] - leftHand.stabilizedPalmPosition[Y];
       // console.log("Movement: " + dX + ","+dY);
 
       var center = map.getCenter();
@@ -132,7 +132,7 @@ function markHands(frame) {
 
         var hand = hands[i];
 
-        newCenter = new google.maps.LatLng(origin.lat() + ((hand.palmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.palmPosition[0] * scaling));
+        newCenter = new google.maps.LatLng(origin.lat() + ((hand.stabilizedPalmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.stabilizedPalmPosition[0] * scaling));
 
         // console.log(center.lat() + "," + center.lng());
         // console.log(newCenter.lat() + "," + newCenter.lng());
