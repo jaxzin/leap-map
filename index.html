@@ -189,7 +189,8 @@ function initialize() {
 /** Returns the truth that a Leap Motion API Hand object is currently in a gripped or "grabbed" state.
 */
 function isGripped(hand) {
-  return hand.pointables.length == 0;
+  // When using the map, assume a stray finger should be a dealbreaker for if the hand is considered gripped.
+  return hand.pointables.length <= 1;
 }
 
 
