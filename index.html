@@ -29,7 +29,7 @@ function move(frame) {
     markHands(frame);
 
     // if there is one hand grabbing...
-    if(frame.hands.length > 0 && frame.hands[LEFT_HAND].pointables.length == 0) {
+    if(frame.hands.length > 0 && isGripped(frame.hands[LEFT_HAND])) {
       var leftHand = frame.hands[LEFT_HAND];
       var rightHand = frame.hands.length > 1 ? frame.hands[RIGHT_HAND] : undefined;
       var separation;
@@ -42,7 +42,7 @@ function move(frame) {
 
       // if there is a right hand and its gripped...
       if(rightHand) {
-        if(rightHand.pointables.length == 0) {
+        if(isGripped(rightHand)) {
           separation = Math.sqrt(
                             Math.pow(rightHand.stabilizedPalmPosition[X] - leftHand.stabilizedPalmPosition[X], 2) + 
                             Math.pow(rightHand.stabilizedPalmPosition[Y] - leftHand.stabilizedPalmPosition[Y], 2)
@@ -94,12 +94,12 @@ function move(frame) {
 
     } else {
       // If the left hand is not in a grab position, clear the last hand position
-      if(frame.hands.length > LEFT_HAND && frame.hands[LEFT_HAND].pointables.length > 0 && leftHandPrev != null) {
+      if(frame.hands.length > LEFT_HAND && !isGripped(frame.hands[LEFT_HAND]) && leftHandPrev != null) {
         leftHandPrev = null;
       }
 
       // if the right hand is not in a grab position, clear the separation
-      if(frame.hands.length > RIGHT_HAND && frame.hands[RIGHT_HAND].pointables.length > 0 && separationStart != null) {
+      if(frame.hands.length > RIGHT_HAND && !isGripped(frame.hands[RIGHT_HAND]) && separationStart != null) {
         separationStart = null;
       }
        // console.log("Clearing lastHand");
@@ -138,7 +138,7 @@ function markHands(frame) {
         // console.log(newCenter.lat() + "," + newCenter.lng());
 
 
-        var gripped = hand.pointables.length == 0;
+        var gripped = isGripped(hand);
         var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
 
         var handColor = gripped ? '#007700' : '#777777';
@@ -183,6 +183,14 @@ function initialize() {
   Leap.loop(move);
 }
 
+
+// ==== utility functions =====
+
+/** Returns the truth that a Leap Motion API Hand object is currently in a gripped or "grabbed" state.
+*/
+function isGripped(hand) {
+  return hand.pointables.length == 0;
+}
 
 
 google.maps.event.addDomListener(window, 'load', initialize);
