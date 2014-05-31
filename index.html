@@ -12,7 +12,9 @@
       }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
-    <script src="https://js.leapmotion.com/0.2.0/leap.min.js"></script>
+    <script src="//js.leapmotion.com/leap-0.6.0.min.js"></script>
+    <script src="//js.leapmotion.com/leap-plugins-0.1.6.js"></script>
+    <script src="//js.leapmotion.com/leap.rigged-hand-0.1.4.min.js"></script>
     <script>
 var map;
 var leftHandPrev;
@@ -189,8 +191,7 @@ function initialize() {
 /** Returns the truth that a Leap Motion API Hand object is currently in a gripped or "grabbed" state.
 */
 function isGripped(hand) {
-  // When using the map, assume a stray finger should be a dealbreaker for if the hand is considered gripped.
-  return hand.pointables.length <= 1;
+  return hand.grabStrength == 1.0;
 }
 
 
