@@ -178,27 +178,32 @@ function markHands(frame) {
 }
 
 var zoomLevelAtCircleStart;
+var INDEX_FINGER = 1;
 
 function zoom(frame, circleGesture) {
-    switch(circleGesture.state) {
-        case "start":
-            zoomLevelAtCircleStart = map.getZoom();
+    // Only zoom based on one index finger
+    if(circleGesture.pointableIds.length == 1 &&
+            frame.pointable(circleGesture.pointableIds[0]).type == INDEX_FINGER) {
+        switch(circleGesture.state) {
+            case "start":
+                zoomLevelAtCircleStart = map.getZoom();
             // fall through on purpose...
-        case "update":
-            // figure out if we need to change the zoom level;
-            var zoomChange = Math.floor(circleGesture.progress);
-            var currentZoom = map.getZoom();
-            var zoomDirection = isClockwise(frame, circleGesture) ? zoomChange : -zoomChange;
-            if(zoomLevelAtCircleStart + zoomDirection != currentZoom) {
-                var newZoom = zoomLevelAtCircleStart + zoomDirection;
-                if(newZoom >= 0 && newZoom <= MAX_ZOOM) {
-                    map.setZoom(newZoom);
+            case "update":
+                // figure out if we need to change the zoom level;
+                var zoomChange = Math.floor(circleGesture.progress);
+                var currentZoom = map.getZoom();
+                var zoomDirection = isClockwise(frame, circleGesture) ? zoomChange : -zoomChange;
+                if(zoomLevelAtCircleStart + zoomDirection != currentZoom) {
+                    var newZoom = zoomLevelAtCircleStart + zoomDirection;
+                    if(newZoom >= 0 && newZoom <= MAX_ZOOM) {
+                        map.setZoom(newZoom);
+                    }
                 }
-            }
-            break;
-        case "stop":
-            zoomLevelAtCircleStart = null;
-            break;
+                break;
+            case "stop":
+                zoomLevelAtCircleStart = null;
+                break;
+        }
     }
 }
 
