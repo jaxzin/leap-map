@@ -12,7 +12,9 @@
       }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
-    <script src="https://js.leapmotion.com/0.2.0/leap.min.js"></script>
+    <script src="//js.leapmotion.com/leap-0.6.0.min.js"></script>
+    <script src="//js.leapmotion.com/leap-plugins-0.1.6.js"></script>
+    <script src="//js.leapmotion.com/leap.rigged-hand-0.1.4.min.js"></script>
     <script>
 var map;
 var leftHandPrev;
@@ -25,6 +27,14 @@ var LEFT_HAND = 0, RIGHT_HAND = 1;
 var X = 0, Y = 1, Z = 2;
 
 function move(frame) {
+
+    // Look for any circle gestures and process the zoom
+    // TODO: filter out multiple circle gestures per frame
+    if(frame.valid && frame.gestures.length > 0){
+        frame.gestures.forEach(function(gesture){
+            filterGesture("circle", zoom)(frame, gesture);
+        });
+    }
 
     markHands(frame);
 
@@ -104,8 +114,7 @@ function move(frame) {
       }
        // console.log("Clearing lastHand");
     }
-};
-
+}
 
 var handMarkers = [];
 
@@ -113,58 +122,89 @@ var HEIGHT_OFFSET = 150;
 var BASE_MARKER_SIZE_GRIPPED = 350000, BASE_MARKER_SIZE_UNGRIPPED = 500000;
 
 function markHands(frame) {
-
-
-      var scaling = (4.0 / Math.pow(2, map.getZoom()-1));
+    var scaling = (4.0 / Math.pow(2, map.getZoom()-1));
 
       var bounds = map.getBounds();
       // FIXME: Sometimes this gets run too early, just exit if its too early.
       if(!bounds) { return; }
       var origin = new google.maps.LatLng(bounds.getSouthWest().lat(), bounds.getCenter().lng());
 
-      var hands = frame.hands
+      var hands = frame.hands;
       for(var i in hands) {
+          if(hands.hasOwnProperty(i)) {
 
-        // Limit this to 2 hands for now
-        if(i > RIGHT_HAND) {
-          return;
-        }
+            // Limit this to 2 hands for now
+            if(i > RIGHT_HAND) {
+              return;
+            }
 
-        var hand = hands[i];
+            var hand = hands[i];
 
-        newCenter = new google.maps.LatLng(origin.lat() + ((hand.stabilizedPalmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.stabilizedPalmPosition[0] * scaling));
+            newCenter = new google.maps.LatLng(origin.lat() + ((hand.stabilizedPalmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.stabilizedPalmPosition[0] * scaling));
 
-        // console.log(center.lat() + "," + center.lng());
-        // console.log(newCenter.lat() + "," + newCenter.lng());
-
-
-        var gripped = isGripped(hand);
-        var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
-
-        var handColor = gripped ? '#007700' : '#777777';
-
-        var handMarker = handMarkers[i];
-        if(!handMarker) {
-          handMarker = new google.maps.Circle();
-          handMarkers[i] = handMarker;
-        }
+            // console.log(center.lat() + "," + center.lng());
+            // console.log(newCenter.lat() + "," + newCenter.lng());
 
 
-        handMarker.setOptions({
-          strokeColor: handColor,
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: handColor,
-          fillOpacity: 0.35,
-          map: map,
-          center: newCenter,
-          radius: baseRadius * scaling
-        });
+            var gripped = isGripped(hand);
+            var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
 
+            var handColor = getHandColor(hand);
+
+            var handMarker = handMarkers[i];
+            if(!handMarker) {
+              handMarker = new google.maps.Circle();
+              handMarkers[i] = handMarker;
+            }
+
+
+            handMarker.setOptions({
+              strokeColor: handColor,
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: handColor,
+              fillOpacity: 0.35,
+              map: map,
+              center: newCenter,
+              radius: baseRadius * scaling
+            });
+
+
+          }
       }
 
 
 
+}
+
+var zoomLevelAtCircleStart;
+var INDEX_FINGER = 1;
+
+function zoom(frame, circleGesture) {
+    // Only zoom based on one index finger
+    if(circleGesture.pointableIds.length == 1 &&
+            frame.pointable(circleGesture.pointableIds[0]).type == INDEX_FINGER) {
+        switch(circleGesture.state) {
+            case "start":
+                zoomLevelAtCircleStart = map.getZoom();
+            // fall through on purpose...
+            case "update":
+                // figure out if we need to change the zoom level;
+                var zoomChange = Math.floor(circleGesture.progress);
+                var currentZoom = map.getZoom();
+                var zoomDirection = isClockwise(frame, circleGesture) ? zoomChange : -zoomChange;
+                if(zoomLevelAtCircleStart + zoomDirection != currentZoom) {
+                    var newZoom = zoomLevelAtCircleStart + zoomDirection;
+                    if(newZoom >= 0 && newZoom <= MAX_ZOOM) {
+                        map.setZoom(newZoom);
+                    }
+                }
+                break;
+            case "stop":
+                zoomLevelAtCircleStart = null;
+                break;
+        }
+    }
 }
 
 function initialize() {
@@ -180,7 +220,7 @@ function initialize() {
       mapOptions);
 
   // listen to Leap Motion
-  Leap.loop(move);
+  Leap.loop({enableGestures: true}, move);
 }
 
 
@@ -189,8 +229,36 @@ function initialize() {
 /** Returns the truth that a Leap Motion API Hand object is currently in a gripped or "grabbed" state.
 */
 function isGripped(hand) {
-  // When using the map, assume a stray finger should be a dealbreaker for if the hand is considered gripped.
-  return hand.pointables.length <= 1;
+  return hand.grabStrength == 1.0;
+}
+
+function getHandColor(hand) {
+    if(isGripped(hand)) {
+        return "rgb(0,119,0)";
+    } else {
+        var tint = Math.round((1.0 - hand.grabStrength) * 119);
+        tint = "rgb(119," + tint + "," + tint + ")";
+        return tint;
+    }
+}
+
+function filterGesture(gestureType, callback) {
+    return function(frame, gesture) {
+        if(gesture.type == gestureType) {
+            callback(frame, gesture);
+        }
+    }
+}
+
+function isClockwise(frame, gesture) {
+    var clockwise = false;
+    var pointableID = gesture.pointableIds[0];
+    var direction = frame.pointable(pointableID).direction;
+    var dotProduct = Leap.vec3.dot(direction, gesture.normal);
+
+    if (dotProduct  >  0) clockwise = true;
+
+    return clockwise;
 }
 
 
