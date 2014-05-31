@@ -106,8 +106,7 @@ function move(frame) {
       }
        // console.log("Clearing lastHand");
     }
-};
-
+}
 
 var handMarkers = [];
 
@@ -115,54 +114,55 @@ var HEIGHT_OFFSET = 150;
 var BASE_MARKER_SIZE_GRIPPED = 350000, BASE_MARKER_SIZE_UNGRIPPED = 500000;
 
 function markHands(frame) {
-
-
-      var scaling = (4.0 / Math.pow(2, map.getZoom()-1));
+    var scaling = (4.0 / Math.pow(2, map.getZoom()-1));
 
       var bounds = map.getBounds();
       // FIXME: Sometimes this gets run too early, just exit if its too early.
       if(!bounds) { return; }
       var origin = new google.maps.LatLng(bounds.getSouthWest().lat(), bounds.getCenter().lng());
 
-      var hands = frame.hands
+      var hands = frame.hands;
       for(var i in hands) {
+          if(hands.hasOwnProperty(i)) {
 
-        // Limit this to 2 hands for now
-        if(i > RIGHT_HAND) {
-          return;
-        }
+            // Limit this to 2 hands for now
+            if(i > RIGHT_HAND) {
+              return;
+            }
 
-        var hand = hands[i];
+            var hand = hands[i];
 
-        newCenter = new google.maps.LatLng(origin.lat() + ((hand.stabilizedPalmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.stabilizedPalmPosition[0] * scaling));
+            newCenter = new google.maps.LatLng(origin.lat() + ((hand.stabilizedPalmPosition[1] - HEIGHT_OFFSET) * scaling), origin.lng() + (hand.stabilizedPalmPosition[0] * scaling));
 
-        // console.log(center.lat() + "," + center.lng());
-        // console.log(newCenter.lat() + "," + newCenter.lng());
-
-
-        var gripped = isGripped(hand);
-        var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
-
-        var handColor = getHandColor(hand);
-
-        var handMarker = handMarkers[i];
-        if(!handMarker) {
-          handMarker = new google.maps.Circle();
-          handMarkers[i] = handMarker;
-        }
+            // console.log(center.lat() + "," + center.lng());
+            // console.log(newCenter.lat() + "," + newCenter.lng());
 
 
-        handMarker.setOptions({
-          strokeColor: handColor,
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: handColor,
-          fillOpacity: 0.35,
-          map: map,
-          center: newCenter,
-          radius: baseRadius * scaling
-        });
+            var gripped = isGripped(hand);
+            var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
 
+            var handColor = getHandColor(hand);
+
+            var handMarker = handMarkers[i];
+            if(!handMarker) {
+              handMarker = new google.maps.Circle();
+              handMarkers[i] = handMarker;
+            }
+
+
+            handMarker.setOptions({
+              strokeColor: handColor,
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: handColor,
+              fillOpacity: 0.35,
+              map: map,
+              center: newCenter,
+              radius: baseRadius * scaling
+            });
+
+
+          }
       }
 
 
