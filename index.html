@@ -143,7 +143,7 @@ function markHands(frame) {
         var gripped = isGripped(hand);
         var baseRadius = gripped ? BASE_MARKER_SIZE_GRIPPED : BASE_MARKER_SIZE_UNGRIPPED;
 
-        var handColor = gripped ? '#007700' : '#777777';
+        var handColor = getHandColor(hand);
 
         var handMarker = handMarkers[i];
         if(!handMarker) {
@@ -192,6 +192,16 @@ function initialize() {
 */
 function isGripped(hand) {
   return hand.grabStrength == 1.0;
+}
+
+function getHandColor(hand) {
+    if(isGripped(hand)) {
+        return "rgb(0,119,0)";
+    } else {
+        var tint = Math.round((1.0 - hand.grabStrength) * 119);
+        tint = "rgb(119," + tint + "," + tint + ")";
+        return tint;
+    }
 }
 
 
