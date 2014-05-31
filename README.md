@@ -8,6 +8,8 @@ Usage
 ------
 * Grab the map with one hand to pan around.
 * Grab the map with two hands to zoom.
+* Draw a clockwise circle with your index finger to zoom in.
+* Draw a counterclockwise circle with your index finder to zoom out.
 
 Example
 ------

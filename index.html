@@ -28,6 +28,14 @@ var X = 0, Y = 1, Z = 2;
 
 function move(frame) {
 
+    // Look for any circle gestures and process the zoom
+    // TODO: filter out multiple circle gestures per frame
+    if(frame.valid && frame.gestures.length > 0){
+        frame.gestures.forEach(function(gesture){
+            filterGesture("circle", zoom)(frame, gesture);
+        });
+    }
+
     markHands(frame);
 
     // if there is one hand grabbing...
@@ -169,6 +177,31 @@ function markHands(frame) {
 
 }
 
+var zoomLevelAtCircleStart;
+
+function zoom(frame, circleGesture) {
+    switch(circleGesture.state) {
+        case "start":
+            zoomLevelAtCircleStart = map.getZoom();
+            // fall through on purpose...
+        case "update":
+            // figure out if we need to change the zoom level;
+            var zoomChange = Math.floor(circleGesture.progress);
+            var currentZoom = map.getZoom();
+            var zoomDirection = isClockwise(frame, circleGesture) ? zoomChange : -zoomChange;
+            if(zoomLevelAtCircleStart + zoomDirection != currentZoom) {
+                var newZoom = zoomLevelAtCircleStart + zoomDirection;
+                if(newZoom >= 0 && newZoom <= MAX_ZOOM) {
+                    map.setZoom(newZoom);
+                }
+            }
+            break;
+        case "stop":
+            zoomLevelAtCircleStart = null;
+            break;
+    }
+}
+
 function initialize() {
   var mapOptions = {
     zoom: 8,
@@ -182,7 +215,7 @@ function initialize() {
       mapOptions);
 
   // listen to Leap Motion
-  Leap.loop(move);
+  Leap.loop({enableGestures: true}, move);
 }
 
 
@@ -202,6 +235,25 @@ function getHandColor(hand) {
         tint = "rgb(119," + tint + "," + tint + ")";
         return tint;
     }
+}
+
+function filterGesture(gestureType, callback) {
+    return function(frame, gesture) {
+        if(gesture.type == gestureType) {
+            callback(frame, gesture);
+        }
+    }
+}
+
+function isClockwise(frame, gesture) {
+    var clockwise = false;
+    var pointableID = gesture.pointableIds[0];
+    var direction = frame.pointable(pointableID).direction;
+    var dotProduct = Leap.vec3.dot(direction, gesture.normal);
+
+    if (dotProduct  >  0) clockwise = true;
+
+    return clockwise;
 }
 
 
